@@ -23,12 +23,17 @@ class ACFrame(object):
 
 		log.info("Loading frame %s" % (uid,))
 
-		try:
-			layer = ACLayer(zf, "%s.0" % (uid,))
-		except:
-			log.error("Loading of a layer failed!")
-		else:
-			frame.layers.append(layer)
+		with zf.open("%s.layers" % (uid,)) as lf:
+
+			for n, line in enumerate(lf):
+				try:
+					layer = ACLayer(zf, "%s.%d" % (uid, n))
+				except:
+					# empty layers have an entry in
+					# .layers, but no data file
+					log.error("Loading of a layer failed! (probably an empty layer)")
+				else:
+					frame.layers.append(layer)
 
 		return frame
 

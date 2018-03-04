@@ -51,14 +51,13 @@ frame is represented as a Layer Group in GIMP.
 
 ## Known limitations
 
-Currently the plug-in supports multiple layers per frame. Layer opacity is not
-imported. Hidden layers are impoted as visible in GIMP.
+Currently the plug-in should correctly handle multiple layers per frame, with
+layer opacity and visibility settings imported into GIMP.
 
-Backdrop image is not imported.
+Blank frames are imported as empty layer groups. Backdrop image is not
+imported.
 
 Data not relevant to GIMP is ignored (e.g. audio, frame rate)
-
-Blank frames are imported as empty layer groups.
 
 The plug-in was developed with files exported from Animation Creator version
 1.14.3. Other versions might use a different file format and might not work

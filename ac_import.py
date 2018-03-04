@@ -13,6 +13,9 @@ class ACLayer(object):
 		with zf.open(path) as f:
 			self.png_data = f.read()
 
+		self.visible = True
+		self.opacity = 100.
+
 class ACFrame(object):
 	def __init__(self):
 		self.layers = []
@@ -31,9 +34,21 @@ class ACFrame(object):
 				except:
 					# empty layers have an entry in
 					# .layers, but no data file
-					log.error("Loading of a layer failed! (probably an empty layer)")
-				else:
-					frame.layers.append(layer)
+					log.error("Loading of layer %d failed! (probably an empty layer)" % (n,))
+					continue
+
+				frame.layers.append(layer)
+
+				f = line.split(',')
+				try:
+					layer.visible = int(f[1]) > 0
+				except:
+					log.error("Can't determine layer %d visibility: %s" % (n, line))
+
+				try:
+					layer.opacity = float(f[0])*100
+				except:
+					log.error("Can't determine layer %d opacity: %s" % (n, line))
 
 		return frame
 
@@ -83,6 +98,8 @@ def import_ac(img, layer, path):
 			f.close()
 
 			lay.name = "frame%04d_%d" % (frame_n, layer_n)
+			lay.opacity = layer.opacity
+			lay.visible = layer.visible
 
 			img.insert_layer(lay, grp)
 			lay.transform_rotate_simple(2, False, 0, 0)

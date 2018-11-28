@@ -54,6 +54,7 @@ class ACFrame(object):
 class ACProject(object):
 	def __init__(self):
 		self.frames = []
+		self.background = None
 
 	@classmethod
 	def load(cls, path):
@@ -69,7 +70,31 @@ class ACProject(object):
 					frame = ACFrame.load(zf, uid)
 					proj.frames.append(frame)
 
+			try:
+				proj.background = ACLayer(zf, "background")
+			except:
+				log.error("Can't load background layer.")
+
 		return proj
+
+def _load_layer(img, layer):
+	f = tempfile.NamedTemporaryFile(suffix=".png")
+	f.write(layer.png_data)
+	f.flush()
+
+	lay = pdb.gimp_file_load_layer(img, f.name)
+
+	f.close()
+
+	return lay
+
+def _add_group(img):
+	grp = pdb.gimp_layer_group_new(img)
+
+	img.active_layer = img.layers[-1]
+	img.insert_layer(grp)
+
+	return grp
 
 def import_ac(img, layer, path):
 
@@ -80,22 +105,13 @@ def import_ac(img, layer, path):
 	#i = 0
 	frame_n = len(proj.frames)
 	for frame in reversed(proj.frames):
-		grp = pdb.gimp_layer_group_new(img)
-		grp.name = "frame%04d" % (frame_n,)
 
-		img.active_layer = img.layers[-1]
-		img.insert_layer(grp)
+		grp = _add_group(img)
+		grp.name = "frame%04d" % (frame_n,)
 
 		layer_n = 0
 		for layer in frame.layers:
-			f = tempfile.NamedTemporaryFile(suffix=".png")
-			f.write(layer.png_data)
-			f.flush()
-
-			lay = pdb.gimp_file_load_layer(img, f.name)
-
-			f.close()
-
+			lay = _load_layer(img, layer)
 			lay.name = "frame%04d_%d" % (frame_n, layer_n)
 			lay.opacity = layer.opacity
 			lay.visible = layer.visible
@@ -110,8 +126,32 @@ def import_ac(img, layer, path):
 		#if i > 3:
 		#	break
 
+	# Add [background] group before removing the remaining empty image
+	# layer. This way it ends up at the top level, not inside the last
+	# frame group.
+	grp = _add_group(img)
+	grp.name = "[background]"
+
 	img.remove_layer(img.layers[-1])
 	img.resize_to_layers()
+
+	# there is a default white background that can be seen through
+	# transparent areas in the actual background image.
+	#
+	# Note that projects that do not have a defined background image
+	# seem to have a 1x1 PNG as the background.
+	lay = pdb.gimp_layer_new(img, img.width, img.height, 0, "paper", 100, 0)
+	img.insert_layer(lay, grp)
+	pdb.gimp_edit_fill(lay, WHITE_FILL)
+
+	if proj.background is not None:
+		# Load the actual background
+		lay = _load_layer(img, proj.background)
+		lay.name = "background"
+
+		img.insert_layer(lay, grp)
+		lay.transform_rotate_simple(2, False, 0, 0)
+		lay.transform_2d(0, 0, 1, 1, 0, 0, +lay.height, TRANSFORM_FORWARD, INTERPOLATION_NONE)
 
 	img.undo_group_end()
 

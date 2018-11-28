@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from gimpfu import *
 import zipfile
 import logging
 import tempfile
@@ -117,19 +116,25 @@ def import_ac(img, layer, path):
 	img.undo_group_end()
 
 
-register(
-	"python_fu_ca_import",
-	"Import frames from Animation Creator HD app (.ac file)",
-	"Import frames from Animation Creator HD app",
-	"Tomaz Solc",
-	"GPLv3+",
-	"2017",
-	"<Image>/Filters/Animation/Import from AC",
-	"*",
-	[
-		(PF_FILE, "path", "Path to file to import", ""),
-	],
-	[],
-	import_ac)
+def start():
+	register(
+		"python_fu_ca_import",
+		"Import frames from Animation Creator HD app (.ac file)",
+		"Import frames from Animation Creator HD app",
+		"Tomaz Solc",
+		"GPLv3+",
+		"2017",
+		"<Image>/Filters/Animation/Import from AC",
+		"*",
+		[
+			(PF_FILE, "path", "Path to file to import", ""),
+		],
+		[],
+		import_ac)
 
-main()
+	main()
+
+if __name__ == "__main__":
+	from gimpfu import *
+
+	start()

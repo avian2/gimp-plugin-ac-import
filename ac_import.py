@@ -112,7 +112,10 @@ def import_ac(img, layer, path):
 		layer_n = 0
 		for layer in frame.layers:
 			lay = _load_layer(img, layer)
-			lay.name = "frame%04d_%d" % (frame_n, layer_n)
+
+			prefix = "layer" + chr(ord('a') + layer_n)
+			lay.name = "%s%04d" % (prefix, frame_n)
+
 			lay.opacity = layer.opacity
 			lay.visible = layer.visible
 

@@ -54,8 +54,7 @@ frame is represented as a Layer Group in GIMP.
 Currently the plug-in should correctly handle multiple layers per frame, with
 layer opacity and visibility settings imported into GIMP.
 
-Blank frames are imported as empty layer groups. Backdrop image is not
-imported.
+Blank frames are imported as empty layer groups.
 
 Data not relevant to GIMP is ignored (e.g. audio, frame rate)
 

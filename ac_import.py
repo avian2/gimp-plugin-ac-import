@@ -77,7 +77,7 @@ class ACProject(object):
 
 		return proj
 
-def _load_layer(img, layer):
+def _load_layer(img, layer, grp, name):
 	f = tempfile.NamedTemporaryFile(suffix=".png")
 	f.write(layer.png_data)
 	f.flush()
@@ -86,7 +86,13 @@ def _load_layer(img, layer):
 
 	f.close()
 
-	return lay
+	lay.name = name
+	lay.opacity = layer.opacity
+	lay.visible = layer.visible
+
+	img.insert_layer(lay, grp)
+	lay.transform_rotate_simple(2, False, 0, 0)
+	lay.set_offsets(0, 0)
 
 def _add_group(img):
 	grp = pdb.gimp_layer_group_new(img)
@@ -111,16 +117,10 @@ def import_ac(img, layer, path):
 
 		layer_n = 0
 		for layer in frame.layers:
-			lay = _load_layer(img, layer)
-
 			prefix = "layer" + chr(ord('a') + layer_n)
-			lay.name = "%s%04d" % (prefix, frame_n)
+			name = "%s%04d" % (prefix, frame_n)
 
-			lay.opacity = layer.opacity
-			lay.visible = layer.visible
-
-			img.insert_layer(lay, grp)
-			lay.transform_rotate_simple(2, False, 0, 0)
+			_load_layer(img, layer, grp, name)
 
 			layer_n += 1
 
@@ -135,6 +135,10 @@ def import_ac(img, layer, path):
 	grp = _add_group(img)
 	grp.name = "[background]"
 
+	# Load the actual background image (if it exists)
+	if proj.background is not None:
+		_load_layer(img, proj.background, grp, "background")
+
 	img.remove_layer(img.layers[-1])
 	img.resize_to_layers()
 
@@ -144,17 +148,8 @@ def import_ac(img, layer, path):
 	# Note that projects that do not have a defined background image
 	# seem to have a 1x1 PNG as the background.
 	lay = pdb.gimp_layer_new(img, img.width, img.height, 0, "paper", 100, 0)
-	img.insert_layer(lay, grp)
+	img.insert_layer(lay, grp, 1)
 	pdb.gimp_edit_fill(lay, WHITE_FILL)
-
-	if proj.background is not None:
-		# Load the actual background
-		lay = _load_layer(img, proj.background)
-		lay.name = "background"
-
-		img.insert_layer(lay, grp)
-		lay.transform_rotate_simple(2, False, 0, 0)
-		lay.transform_2d(0, 0, 1, 1, 0, 0, +lay.height, TRANSFORM_FORWARD, INTERPOLATION_NONE)
 
 	img.undo_group_end()
 
